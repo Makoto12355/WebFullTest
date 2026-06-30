@@ -1,0 +1,1 @@
+API categories path = http://localhost:3000/api/categories
