@@ -72,7 +72,8 @@ router.get("/:id", async (req, res) => {
 
 router.post("/", async (req, res) => {
     try {
-        const { food_name, price, is_available, catagory_id } = req.body;
+        const { food_name, price, is_available, catagory_id, image_path } = req.body;
+        const uncategorizedId = 1000;
 
         if (!food_name || typeof food_name !== "string") {
             return res.status(400).json({
@@ -88,17 +89,22 @@ router.post("/", async (req, res) => {
             });
         }
 
-        if (!catagory_id || Number.isNaN(Number(catagory_id))) {
+        const finalCategoryId =
+            catagory_id === undefined || catagory_id === null || catagory_id === ""
+                ? uncategorizedId
+                : Number(catagory_id);
+
+        if (Number.isNaN(finalCategoryId)) {
             return res.status(400).json({
                 success: false,
-                message: "กรุณาระบุ catagory_id ให้ถูกต้อง"
+                message: "catagory_id ไม่ถูกต้อง"
             });
         }
 
         const { data: categoryData, error: categoryError } = await supabase
             .from("category")
             .select("catagory_id")
-            .eq("catagory_id", catagory_id)
+            .eq("catagory_id", finalCategoryId)
             .single();
 
         if (categoryError || !categoryData) {
@@ -115,7 +121,8 @@ router.post("/", async (req, res) => {
                     food_name: food_name.trim(),
                     price: Number(price),
                     is_available: typeof is_available === "boolean" ? is_available : true,
-                    catagory_id: finalCategoryId
+                    catagory_id: finalCategoryId,
+                    image_path: image_path || null
                 }
             ])
             .select()
