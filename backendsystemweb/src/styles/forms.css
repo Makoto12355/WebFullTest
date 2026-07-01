@@ -1,0 +1,89 @@
+.form-grid {
+    display: grid;
+    gap: 14px;
+}
+
+.field {
+    display: grid;
+    gap: 8px;
+}
+
+.label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #334155;
+}
+
+.input,
+.select {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    background: #ffffff;
+    padding: 12px 14px;
+    color: #0f172a;
+}
+
+.input:focus,
+.select:focus {
+    outline: none;
+    border-color: #2563eb;
+}
+
+.select--small {
+    padding: 8px 10px;
+    min-width: 150px;
+}
+
+.checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #334155;
+}
+
+.button {
+    border: none;
+    border-radius: 12px;
+    padding: 11px 16px;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.button--primary {
+    background: #0f172a;
+    color: #ffffff;
+}
+
+.button--primary:hover {
+    background: #1e293b;
+}
+
+.button--outline {
+    background: #ffffff;
+    color: #0f172a;
+    border: 1px solid #cbd5e1;
+}
+
+.button--outline:hover {
+    background: #f8fafc;
+}
+
+.button--danger {
+    background: #dc2626;
+    color: #ffffff;
+}
+
+.button--danger:hover {
+    background: #b91c1c;
+}
+
+.button--small {
+    padding: 8px 12px;
+    font-size: 14px;
+}
