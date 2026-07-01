@@ -57,6 +57,120 @@ router.get("/", async (req, res) => {
     }
 });
 
+router.get("/:id/detail", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const tableId = Number(id);
+
+        if (Number.isNaN(tableId)) {
+            return res.status(400).json({
+                success: false,
+                message: "table_id ไม่ถูกต้อง"
+            });
+        }
+
+        const { data: tableData, error: tableError } = await supabase
+            .from("tb_data")
+            .select("*")
+            .eq("table_id", tableId)
+            .maybeSingle();
+
+        if (tableError) {
+            return res.status(500).json({
+                success: false,
+                message: "ดึงข้อมูลโต๊ะไม่สำเร็จ",
+                error: tableError.message
+            });
+        }
+
+        if (!tableData) {
+            return res.status(404).json({
+                success: false,
+                message: "ไม่พบโต๊ะที่ต้องการ"
+            });
+        }
+
+        const { data: ordersData, error: ordersError } = await supabase
+            .from("orders")
+            .select("*")
+            .eq("table_id", tableId)
+            .order("ordered_at", { ascending: false });
+
+        if (ordersError) {
+            return res.status(500).json({
+                success: false,
+                message: "ดึงข้อมูล order ของโต๊ะไม่สำเร็จ",
+                error: ordersError.message
+            });
+        }
+
+        if (!ordersData || ordersData.length === 0) {
+            return res.status(200).json({
+                success: true,
+                message: "ดึงรายละเอียดโต๊ะสำเร็จ",
+                data: {
+                    table: tableData,
+                    orders: []
+                }
+            });
+        }
+
+        const orderIds = ordersData.map((order) => order.order_id);
+
+        const { data: orderItemsData, error: orderItemsError } = await supabase
+            .from("order_item")
+            .select(`
+                order_item_id,
+                order_id,
+                menu_id,
+                quantity,
+                unit_price,
+                note,
+                menu:menu_id (
+                    food_name,
+                    image_path,
+                    catagory_id
+                )
+            `)
+            .in("order_id", orderIds)
+            .order("order_item_id", { ascending: true });
+
+        if (orderItemsError) {
+            return res.status(500).json({
+                success: false,
+                message: "ดึงข้อมูลรายการอาหารของโต๊ะไม่สำเร็จ",
+                error: orderItemsError.message
+            });
+        }
+
+        const ordersWithItems = ordersData.map((order) => {
+            const items = (orderItemsData || []).filter(
+                (item) => item.order_id === order.order_id
+            );
+
+            return {
+                ...order,
+                items: items
+            };
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "ดึงรายละเอียดโต๊ะสำเร็จ",
+            data: {
+                table: tableData,
+                orders: ordersWithItems
+            }
+        });
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: "Server error",
+            error: err.message
+        });
+    }
+});
+
 router.get("/:id", async (req, res) => {
     try {
         const { id } = req.params;

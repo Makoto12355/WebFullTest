@@ -74,3 +74,82 @@
         flex-direction: column;
     }
 }
+
+.modal-card--wide {
+    max-width: 960px;
+}
+
+.table-detail-layout {
+    display: grid;
+    gap: 16px;
+}
+
+.table-detail-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.detail-pill {
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 14px;
+    background: #f8fafc;
+    display: grid;
+    gap: 8px;
+}
+
+.detail-pill__label {
+    font-size: 13px;
+    color: #64748b;
+}
+
+.card-sub-panel {
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 16px;
+    background: #ffffff;
+}
+
+.orders-detail-list {
+    display: grid;
+    gap: 16px;
+}
+
+.order-detail-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 16px;
+    background: #ffffff;
+}
+
+.order-detail-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.order-detail-card__title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.order-detail-card__time {
+    margin: 6px 0 0;
+    font-size: 14px;
+    color: #64748b;
+}
+
+@media (max-width: 700px) {
+    .table-detail-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .order-detail-card__head {
+        flex-direction: column;
+    }
+}

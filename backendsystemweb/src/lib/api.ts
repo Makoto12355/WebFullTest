@@ -59,3 +59,31 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
 
     return data as T;
 }
+
+export type TableDetailItem = {
+    order_item_id: number;
+    order_id: number;
+    menu_id: number;
+    quantity: number;
+    unit_price: number;
+    note?: string | null;
+    menu?: {
+        food_name?: string;
+        image_path?: string | null;
+        catagory_id?: number;
+    } | null;
+};
+
+export type TableDetailOrder = {
+    order_id: number;
+    bill_no?: string | null;
+    table_id: number;
+    order_status: "waiting" | "preparing" | "completed" | "cancelled";
+    ordered_at?: string | null;
+    items: TableDetailItem[];
+};
+
+export type TableDetailResponse = {
+    table: CafeTable;
+    orders: TableDetailOrder[];
+};

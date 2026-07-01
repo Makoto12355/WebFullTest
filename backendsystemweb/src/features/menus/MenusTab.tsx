@@ -16,6 +16,8 @@ type Props = {
     reload: () => Promise<void>;
 };
 
+type ModalMode = "create" | "edit";
+
 const initialForm = {
     food_name: "",
     price: "",
@@ -28,6 +30,9 @@ export default function MenusTab({ menus, categories, reload }: Props) {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalMode, setModalMode] = useState<ModalMode>("create");
+    const [editingMenuId, setEditingMenuId] = useState<number | null>(null);
+
     const [form, setForm] = useState(initialForm);
 
     const [loading, setLoading] = useState(false);
@@ -58,6 +63,8 @@ export default function MenusTab({ menus, categories, reload }: Props) {
             ...initialForm,
             catagory_id: String(fallback)
         });
+
+        setEditingMenuId(null);
         setError("");
         setImageUploadError("");
         setImagePreviewUrl("");
@@ -70,35 +77,71 @@ export default function MenusTab({ menus, categories, reload }: Props) {
 
     function openCreateModal() {
         resetForm();
+        setModalMode("create");
         setIsModalOpen(true);
     }
 
-    function closeCreateModal() {
+    function openEditModal(menu: Menu) {
+        setModalMode("edit");
+        setEditingMenuId(menu.menu_id);
+        setForm({
+            food_name: menu.food_name,
+            price: String(menu.price),
+            catagory_id: String(menu.catagory_id),
+            is_available: menu.is_available,
+            image_path: menu.image_path || ""
+        });
+        setImagePreviewUrl(getMenuImageUrl(menu.image_path));
+        setImageUploadError("");
+        setError("");
+        setIsDragging(false);
+
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
+
+        setIsModalOpen(true);
+    }
+
+    function closeModal() {
         setIsModalOpen(false);
         setError("");
         setImageUploadError("");
         setIsDragging(false);
     }
 
-    async function handleCreate(e: FormEvent) {
+    async function handleSubmit(e: FormEvent) {
         e.preventDefault();
         setLoading(true);
         setError("");
 
         try {
-            await apiFetch<ApiResult<Menu>>("/menus", {
-                method: "POST",
-                body: JSON.stringify({
-                    food_name: form.food_name,
-                    price: Number(form.price),
-                    catagory_id: Number(form.catagory_id),
-                    is_available: form.is_available,
-                    image_path: form.image_path || null
-                })
-            });
+            const payload = {
+                food_name: form.food_name,
+                price: Number(form.price),
+                catagory_id: Number(form.catagory_id),
+                is_available: form.is_available,
+                image_path: form.image_path || null
+            };
+
+            if (modalMode === "create") {
+                await apiFetch<ApiResult<Menu>>("/menus", {
+                    method: "POST",
+                    body: JSON.stringify(payload)
+                });
+            } else {
+                if (!editingMenuId) {
+                    throw new Error("ไม่พบ menu ที่ต้องการแก้ไข");
+                }
+
+                await apiFetch<ApiResult<Menu>>(`/menus/${editingMenuId}`, {
+                    method: "PUT",
+                    body: JSON.stringify(payload)
+                });
+            }
 
             await reload();
-            closeCreateModal();
+            closeModal();
             resetForm();
         } catch (err) {
             setError(err instanceof Error ? err.message : "เกิดข้อผิดพลาด");
@@ -254,10 +297,18 @@ export default function MenusTab({ menus, categories, reload }: Props) {
                                         <td className="action-group">
                                             <button
                                                 className="button button--outline button--small"
+                                                onClick={() => openEditModal(item)}
+                                            >
+                                                แก้ไข
+                                            </button>
+
+                                            <button
+                                                className="button button--outline button--small"
                                                 onClick={() => toggleAvailability(item)}
                                             >
                                                 สลับสถานะ
                                             </button>
+
                                             <button
                                                 className="button button--danger button--small"
                                                 onClick={() => handleDelete(item.menu_id)}
@@ -282,24 +333,30 @@ export default function MenusTab({ menus, categories, reload }: Props) {
             </div>
 
             {isModalOpen && (
-                <div className="modal-overlay" onClick={closeCreateModal}>
+                <div className="modal-overlay" onClick={closeModal}>
                     <div className="modal-card" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-head">
                             <div>
-                                <h3 className="modal-title">เพิ่มเมนู</h3>
-                                <p className="modal-subtitle">กรอกข้อมูลเมนูแล้วบันทึกลงระบบ</p>
+                                <h3 className="modal-title">
+                                    {modalMode === "create" ? "เพิ่มเมนู" : "แก้ไขเมนู"}
+                                </h3>
+                                <p className="modal-subtitle">
+                                    {modalMode === "create"
+                                        ? "กรอกข้อมูลเมนูแล้วบันทึกลงระบบ"
+                                        : "แก้ข้อมูลเมนูแล้วบันทึกการเปลี่ยนแปลง"}
+                                </p>
                             </div>
 
                             <button
                                 type="button"
                                 className="button button--outline button--small"
-                                onClick={closeCreateModal}
+                                onClick={closeModal}
                             >
                                 ปิด
                             </button>
                         </div>
 
-                        <form className="form-grid" onSubmit={handleCreate}>
+                        <form className="form-grid" onSubmit={handleSubmit}>
                             <div className="field">
                                 <label className="label">ชื่อเมนู</label>
                                 <input
@@ -397,7 +454,7 @@ export default function MenusTab({ menus, categories, reload }: Props) {
                                 <button
                                     type="button"
                                     className="button button--outline"
-                                    onClick={closeCreateModal}
+                                    onClick={closeModal}
                                 >
                                     ยกเลิก
                                 </button>
@@ -407,7 +464,11 @@ export default function MenusTab({ menus, categories, reload }: Props) {
                                     type="submit"
                                     disabled={loading || uploadingImage}
                                 >
-                                    {loading ? "กำลังบันทึก..." : "เพิ่มเมนู"}
+                                    {loading
+                                        ? "กำลังบันทึก..."
+                                        : modalMode === "create"
+                                            ? "เพิ่มเมนู"
+                                            : "บันทึกการแก้ไข"}
                                 </button>
                             </div>
                         </form>
