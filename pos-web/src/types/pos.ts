@@ -10,6 +10,7 @@ export type Menu = {
     is_available: boolean;
     catagory_id: number;
     image_path?: string | null;
+    image_url?: string | null;
 };
 
 export type CafeTable = {

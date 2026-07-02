@@ -9,7 +9,8 @@ type Props = {
 
 export default function MenuCard({ menu, onAdd, disabled }: Props) {
     const imageSrc =
-        menu.image_path && /^https?:\/\//.test(menu.image_path) ? menu.image_path : null;
+        menu.image_url ||
+        (menu.image_path && /^https?:\/\//.test(menu.image_path) ? menu.image_path : null);
 
     return (
         <div className="menu-card">
