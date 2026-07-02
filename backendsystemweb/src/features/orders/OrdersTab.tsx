@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { apiFetch, type ApiResult, type Order, type OrderStatus } from "../../lib/api";
 import StatusBadge from "../../components/StatusBadge";
 
@@ -6,23 +7,47 @@ type Props = {
     reload: () => Promise<void>;
 };
 
-const statuses: OrderStatus[] = ["waiting", "preparing", "completed", "cancelled"];
+const statusOptionsMap: Record<OrderStatus, OrderStatus[]> = {
+    waiting: ["waiting", "preparing", "cancelled"],
+    preparing: ["waiting", "preparing", "completed", "cancelled"],
+    completed: ["completed"],
+    cancelled: ["cancelled"]
+};
 
 export default function OrdersTab({ orders, reload }: Props) {
-    async function updateStatus(orderId: number, status: OrderStatus) {
+    const [loadingId, setLoadingId] = useState<number | null>(null);
+
+    async function handleStatusChange(
+        orderId: number,
+        currentStatus: OrderStatus,
+        nextStatus: OrderStatus
+    ) {
+        if (currentStatus === "completed" || currentStatus === "cancelled") {
+            return;
+        }
+
+        if (currentStatus === nextStatus) {
+            return;
+        }
+
         try {
+            setLoadingId(orderId);
+
             await apiFetch<ApiResult<Order>>(`/orders/${orderId}/status`, {
                 method: "PUT",
-                body: JSON.stringify({ order_status: status })
+                body: JSON.stringify({ order_status: nextStatus })
             });
+
             await reload();
         } catch (err) {
-            alert(err instanceof Error ? err.message : "เกิดข้อผิดพลาด");
+            alert(err instanceof Error ? err.message : "เปลี่ยนสถานะไม่สำเร็จ");
+        } finally {
+            setLoadingId(null);
         }
     }
 
     return (
-        <div className="card table-card">
+        <>
             <div className="card-head">
                 <h3 className="card-title">รายการออเดอร์</h3>
             </div>
@@ -39,29 +64,42 @@ export default function OrdersTab({ orders, reload }: Props) {
                         </tr>
                     </thead>
                     <tbody>
-                        {orders.map((item) => (
-                            <tr key={item.order_id}>
-                                <td>{item.bill_no || "-"}</td>
-                                <td>{item.table_id}</td>
-                                <td>
-                                    <StatusBadge value={item.order_status} />
-                                </td>
-                                <td>{item.ordered_at || "-"}</td>
-                                <td>
-                                    <select
-                                        className="select select--small"
-                                        value={item.order_status}
-                                        onChange={(e) => updateStatus(item.order_id, e.target.value as OrderStatus)}
-                                    >
-                                        {statuses.map((status) => (
-                                            <option key={status} value={status}>
-                                                {status}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </td>
-                            </tr>
-                        ))}
+                        {orders.map((item) => {
+                            const isLocked =
+                                item.order_status === "completed" ||
+                                item.order_status === "cancelled";
+
+                            return (
+                                <tr key={item.order_id}>
+                                    <td>{item.bill_no || "-"}</td>
+                                    <td>โต๊ะ {item.table_no ?? item.table_id}</td>
+                                    <td>
+                                        <StatusBadge value={item.order_status} />
+                                    </td>
+                                    <td>{item.ordered_at || "-"}</td>
+                                    <td>
+                                        <select
+                                            className="select"
+                                            value={item.order_status}
+                                            disabled={isLocked || loadingId === item.order_id}
+                                            onChange={(e) =>
+                                                handleStatusChange(
+                                                    item.order_id,
+                                                    item.order_status,
+                                                    e.target.value as OrderStatus
+                                                )
+                                            }
+                                        >
+                                            {statusOptionsMap[item.order_status].map((status) => (
+                                                <option key={status} value={status}>
+                                                    {status}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </td>
+                                </tr>
+                            );
+                        })}
 
                         {orders.length === 0 && (
                             <tr>
@@ -73,6 +111,6 @@ export default function OrdersTab({ orders, reload }: Props) {
                     </tbody>
                 </table>
             </div>
-        </div>
+        </>
     );
 }

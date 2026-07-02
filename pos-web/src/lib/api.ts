@@ -1,11 +1,3 @@
-import type {
-    CafeTable,
-    Category,
-    Menu,
-    OrderStatus,
-    TableDetailResponse
-} from "../types/pos";
-
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 if (!API_BASE) {
@@ -16,6 +8,57 @@ export type ApiResult<T> = {
     success: boolean;
     message: string;
     data: T;
+};
+
+export type Category = {
+    catagory_id: number;
+    catagory_name: string;
+};
+
+export type Menu = {
+    menu_id: number;
+    food_name: string;
+    price: number;
+    is_available: boolean;
+    catagory_id: number;
+    image_path?: string | null;
+};
+
+export type CafeTable = {
+    table_id: number;
+    table_no?: number;
+    is_occupied: boolean;
+    is_active?: boolean;
+};
+
+export type OrderStatus = "waiting" | "preparing" | "completed" | "cancelled";
+
+export type TableDetailItem = {
+    order_item_id: number;
+    order_id: number;
+    menu_id: number;
+    quantity: number;
+    unit_price: number;
+    note?: string | null;
+    menu?: {
+        food_name?: string;
+        image_path?: string | null;
+        catagory_id?: number;
+    } | null;
+};
+
+export type TableDetailOrder = {
+    order_id: number;
+    bill_no?: string | null;
+    table_id: number;
+    order_status: OrderStatus;
+    ordered_at?: string | null;
+    items: TableDetailItem[];
+};
+
+export type TableDetailResponse = {
+    table: CafeTable;
+    orders: TableDetailOrder[];
 };
 
 async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -44,6 +87,8 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
     return data as T;
 }
 
+export { apiFetch };
+
 export async function fetchTables() {
     return apiFetch<ApiResult<CafeTable[]>>("/tables");
 }
@@ -65,6 +110,7 @@ export async function createOrder(tableId: number) {
         order_id: number;
         bill_no?: string | null;
         table_id: number;
+        table_no?: number | null;
         order_status: OrderStatus;
         ordered_at?: string | null;
     }>>("/orders", {
@@ -76,7 +122,12 @@ export async function createOrder(tableId: number) {
     });
 }
 
-export async function addOrderItem(orderId: number, menuId: number, quantity = 1, note: string | null = null) {
+export async function addOrderItem(
+    orderId: number,
+    menuId: number,
+    quantity = 1,
+    note: string | null = null
+) {
     return apiFetch(`/orders/${orderId}/items`, {
         method: "POST",
         body: JSON.stringify({
@@ -87,7 +138,11 @@ export async function addOrderItem(orderId: number, menuId: number, quantity = 1
     });
 }
 
-export async function updateOrderItem(orderItemId: number, quantity: number, note: string | null = null) {
+export async function updateOrderItem(
+    orderItemId: number,
+    quantity: number,
+    note: string | null = null
+) {
     return apiFetch(`/order-items/${orderItemId}`, {
         method: "PUT",
         body: JSON.stringify({
