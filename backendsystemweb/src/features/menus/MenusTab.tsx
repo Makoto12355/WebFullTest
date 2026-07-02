@@ -292,7 +292,7 @@ export default function MenusTab({ menus, categories, reload }: Props) {
                                             )}
                                         </td>
                                         <td>
-                                            <StatusBadge value={String(item.is_available)} />
+                                            <StatusBadge value={String(item.is_available)} type="menu" />
                                         </td>
                                         <td className="action-group">
                                             <button

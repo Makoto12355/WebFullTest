@@ -33,6 +33,7 @@ export type Order = {
     order_id: number;
     bill_no?: string | null;
     table_id: number;
+    table_no?: number | null;
     order_status: OrderStatus;
     ordered_at?: string | null;
 };

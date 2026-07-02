@@ -1,33 +1,38 @@
 type Props = {
-    value: string | boolean | null | undefined;
+    value: string;
+    type?: "menu" | "table" | "order";
 };
 
-export default function StatusBadge({ value }: Props) {
-    const normalized = String(value ?? "").toLowerCase();
-
+export default function StatusBadge({ value, type = "order" }: Props) {
+    let label = value;
     let className = "status-badge";
-    let label = String(value ?? "-");
 
-    if (normalized === "completed") {
-        className += " status-badge--green";
-        label = "completed";
-    } else if (normalized === "waiting") {
-        className += " status-badge--yellow";
-        label = "waiting";
-    } else if (normalized === "preparing") {
-        className += " status-badge--blue";
-        label = "preparing";
-    } else if (normalized === "cancelled") {
-        className += " status-badge--red";
-        label = "cancelled";
-    } else if (normalized === "true") {
-        className += " status-badge--green";
-        label = "พร้อมขาย";
-    } else if (normalized === "false") {
-        className += " status-badge--gray";
-        label = "ไม่พร้อมขาย";
+    if (type === "table") {
+        const isOccupied = value === "true";
+        label = isOccupied ? "ไม่พร้อมใช้งาน" : "พร้อมใช้งาน";
+        className += isOccupied
+            ? " status-badge--red"
+            : " status-badge--green";
+    } else if (type === "menu") {
+        const isAvailable = value === "true";
+        label = isAvailable ? "พร้อมขาย" : "ไม่พร้อมขาย";
+        className += isAvailable
+            ? " status-badge--green"
+            : " status-badge--red";
     } else {
-        className += " status-badge--gray";
+        if (value === "waiting") {
+            label = "รอรับออเดอร์";
+            className += " status-badge--yellow";
+        } else if (value === "preparing") {
+            label = "กำลังทำ";
+            className += " status-badge--blue";
+        } else if (value === "completed") {
+            label = "เสร็จแล้ว";
+            className += " status-badge--green";
+        } else if (value === "cancelled") {
+            label = "ยกเลิก";
+            className += " status-badge--red";
+        }
     }
 
     return <span className={className}>{label}</span>;

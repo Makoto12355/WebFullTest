@@ -96,7 +96,7 @@ export default function TablesTab({ tables, reload }: Props) {
                                 <p className="table-box__number">#{item.table_no}</p>
                             </div>
 
-                            <StatusBadge value={String(item.is_occupied)} />
+                            <StatusBadge value={String(item.is_occupied)} type="table" />
 
                             <div className="table-box__actions">
                                 <button className="button button--outline" onClick={() => openDetail(item.table_id)}>
